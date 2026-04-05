@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>La Casa de Nena | Charcutería </title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="icon" href="images/logo.JPG" type="image/jpeg">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">
+    <h2>LA NENA</h2>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#inicio">Inicio</a></li>
+    <li><a href="#catalogo">Productos</a></li>
+    <li><a href="#testimonios">Experiencias</a></li>
+    <li><a href="#pedido">Tu pedido</a></li>
+  </ul>
+  <div class="cart-icon-header" id="scrollToCartBtn">
+    <i class="fas fa-shopping-basket"></i> <span id="cartCountBadge">0</span>
+  </div>
+</nav>
+
+<!-- HERO con imagen de jamón -->
+<section id="inicio" class="hero">
+  <div class="hero-content">
+    <h1>Charcutería La Casa de Nena</h1>
+    <p>Jamones, ahumados artesanales y la mejor tradición.</p>
+    <a href="#catalogo" class="btn-gold">Explorar colección <i class="fas fa-arrow-right"></i></a>
+  </div>
+</section>
+
+<!-- QUIENES SOMOS con imagen de jamón -->
+<section class="about fade-in">
+  <div class="grid-2col">
+    <div class="about-text">
+      <h2 class="section-title" style="text-align:left; margin-bottom:1.2rem;">Nuestra esencia</h2>
+      <p style="font-size:1.1rem; line-height:1.5;">Somos una charcutería familiar con más de 20 años de tradición. Seleccionamos las mejores piezas de jamón, ahumados naturales y embutidos artesanales. Cada pieza refleja el compromiso con el sabor auténtico y la calidad superior.</p>
+      <p style="margin-top:1rem;">Desde el corazón de nuestra cocina hasta tu hogar, llevamos el verdadero sabor de la charcutería La Nena.</p>
+    </div>
+    <div class="about-img">
+      <img src="images/logo.JPG" alt="Logo">
+    </div>
+  </div>
+</section>
+
+<!-- BENEFICIOS -->
+<section class="fade-in">
+  <h2 class="section-title">¿Por qué La Casa de Nena?</h2>
+  <div class="benefits-grid">
+    <div class="benefit-card"><i class="fas fa-award"></i><h3>Calidad Premium</h3><p>Jamón 100%, sin conservantes artificiales.</p></div>
+    <div class="benefit-card"><i class="fas fa-truck-fast"></i><h3>Envío express</h3><p>Entregas locales en menos de 24 horas.</p></div>
+    <div class="benefit-card"><i class="fas fa-hand-holding-heart"></i><h3>Atención personalizada</h3><p>Asesoramiento para tus eventos y reuniones.</p></div>
+    <div class="benefit-card"><i class="fas fa-utensils"></i><h3>Corte artesanal</h3><p>Corte a cuchillo y empaque al vacío para máxima frescura.</p></div>
+  </div>
+</section>
+
+<!-- CATÁLOGO -->
+<section id="catalogo" class="fade-in">
+  <h2 class="section-title">Nuestra selección</h2>
+  <div class="product-grid" id="productGrid"></div>
+</section>
+
+<!-- TESTIMONIOS -->
+<section id="testimonios" class="fade-in">
+  <h2 class="section-title">Lo que dicen nuestros clientes</h2>
+  <div class="testimonials-slider">
+    <div class="testimonial"><i class="fas fa-quote-left"></i><p>"El jamón Viki es extraordinario, el mejor sabor. Servicio impecable y rápida entrega."</p><div class="stars">★★★★★</div><strong>— Lisandra Peña</strong></div>
+    <div class="testimonial"><i class="fas fa-quote-left"></i><p>"La mortadela artesanal y el jamón ahumado son espectaculares. Se volvieron mis favoritos."</p><div class="stars">★★★★★</div><strong>— Mirta García</strong></div>
+    <div class="testimonial"><i class="fas fa-quote-left"></i><p>"Excelente atención y productos de primera. Volveré a comprar sin duda."</p><div class="stars">★★★★★</div><strong>— Camila Darla</strong></div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="fade-in">
+  <h2 class="section-title">Preguntas frecuentes</h2>
+  <div class="faq-grid">
+    <details><summary>¿Hacen envíos a domicilio?</summary><p>Sí, realizamos envíos a toda la zona metropolitana con costo adicional según ubicación. Consulta en el pedido.</p></details>
+    <details><summary>¿Puedo personalizar mi pedido?</summary><p>Por supuesto, en las notas del pedido podés especificar preferencias de corte, regalo o presentación especial.</p></details>
+    <details><summary>¿Los productos son frescos?</summary><p>Trabajamos con producción diaria y envasado al vacío para garantizar la máxima frescura y duración.</p></details>
+  </div>
+</section>
+
+<!-- CHECKOUT: CARRITO + FORMULARIO -->
+<section id="pedido" class="fade-in">
+  <h2 class="section-title">Armá tu pedido</h2>
+  <div class="checkout-wrapper">
+    <div class="split-checkout">
+      <div class="cart-col">
+        <div class="cart-items-container">
+          <h3><i class="fas fa-shopping-cart"></i> Carrito de compras</h3>
+          <div id="cartListDynamic"></div>
+          <div class="cart-total">Total: $<span id="cartTotalAmount">0</span></div>
+          <button id="clearCartBtn" class="btn-clear"><i class="fas fa-trash-alt"></i> Vaciar carrito</button>
+        </div>
+      </div>
+      <div class="form-col">
+        <h3><i class="fas fa-edit"></i> Datos de envío</h3>
+        <input type="text" id="nombre" placeholder="Nombre completo *">
+        <input type="text" id="telefono" placeholder="Teléfono *">
+        <input type="text" id="direccion" placeholder="Dirección exacta *">
+        <textarea id="notas" rows="3" placeholder="Notas adicionales (horario, instrucciones)"></textarea>
+        <button id="enviarWhatsappBtn" class="btn-whatsapp"><i class="fab fa-whatsapp"></i> Enviar pedido por WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <h3 style="font-family:'Playfair Display';">Charcutería La Casa de Nena</h3>
+  <p>📍 Servicio local con entrega propia | 📞 Repartidor: 51559319 | ⏰ Horario: 9:00 am - 6:00 pm 🛍️- </p>
+  <!-- Dirección física y grupo de WhatsApp -->
+  <div class="footer-info">
+    <div class="physical-store">
+      <i class="fas fa-store"></i> <strong>La Casa de Nena</strong> — Calle 37 entre 34 y 36 frente a la Dirección Municipal de Vivienda. Nueva Gerona, Isla de la Juventud
+    </div>
+    <div class="whatsapp-group">
+      <a href="https://chat.whatsapp.com/FNnK1Exvswf1i1DeupLBgY" target="_blank" class="btn-whatsapp-group" id="whatsappGroupLink">
+        <i class="fab fa-whatsapp"></i>  Únete a nuestro grupo de Whatsapp
+      </a>
+      <p class="group-note">Entérate de nuevos productos</p>
+    </div>
+  </div>
+  <div class="social-icons">
+    <i class="fab fa-facebook"></i>
+  </div>
+  <p style="margin-top:1rem; font-size:0.8rem;">© 2026 – Sabor y tradición en cada bocado</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
