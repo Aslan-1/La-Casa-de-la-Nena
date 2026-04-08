@@ -1,8 +1,8 @@
-// ---------- CARGAR PRODUCTOS DESDE GOOGLE SHEETS ----------
+// ---------- CARGAR PRODUCTOS DESDE GOOGLE SHEETS (con PapaParse) ----------
 let productsData = [];
 let cart = [];
 
-// ⚠️ ACTUALIZA ESTA URL CON LA DE TU HOJA PUBLICADA COMO CSV
+// ⚠️ IMPORTANTE: Reemplaza esta URL con la de tu hoja publicada como CSV
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1IzqBdZaZ5pv51T0NotqZ5xacneLPj6ndK0-j3gJhqY55nqf0PMZgMylr7eU_TD7Pz_tn0QGAJCG3/pub?output=csv';
 
 // ---------- TOAST NOTIFICATION ----------
@@ -20,107 +20,70 @@ function showToast(message) {
   }, 2500);
 }
 
-// ---------- PARSEAR CSV DE FORMA ROBUSTA ----------
-function parseCSV(csvText) {
-  const lines = csvText.split(/\r?\n/);
-  if (lines.length === 0) return [];
-  
-  // Obtener encabezados (primera línea)
-  const headers = [];
-  let inQuote = false;
-  let current = '';
-  for (let ch of lines[0]) {
-    if (ch === '"') {
-      inQuote = !inQuote;
-    } else if (ch === ',' && !inQuote) {
-      headers.push(current.trim());
-      current = '';
-    } else {
-      current += ch;
-    }
-  }
-  headers.push(current.trim());
-  
-  const result = [];
-  
-  // Procesar cada línea de datos
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line === '') continue;
-    
-    const valores = [];
-    let currentVal = '';
-    let inQuotes = false;
-    
-    for (let ch of line) {
-      if (ch === '"') {
-        inQuotes = !inQuotes;
-      } else if (ch === ',' && !inQuotes) {
-        valores.push(currentVal.trim());
-        currentVal = '';
-      } else {
-        currentVal += ch;
-      }
-    }
-    valores.push(currentVal.trim());
-    
-    // Si la cantidad de valores es menor que headers, rellenar con ''
-    while (valores.length < headers.length) valores.push('');
-    
-    let obj = {};
-    headers.forEach((header, idx) => {
-      let val = valores[idx] || '';
-      // Limpiar posibles comillas sobrantes
-      val = val.replace(/^"|"$/g, '').trim();
-      if (header === 'id' || header === 'precio' || header === 'stock' || header === 'orden') {
-        val = parseInt(val) || 0;
-      }
-      obj[header] = val;
-    });
-    result.push(obj);
-  }
-  return result;
-}
-
-// ---------- CARGAR PRODUCTOS ----------
+// ---------- CARGAR PRODUCTOS USANDO PAPAPARSE ----------
 async function cargarProductosDesdeSheet() {
   try {
     showToast("🔄 Cargando productos...");
     const response = await fetch(CSV_URL);
     const csvText = await response.text();
     
-    console.log("CSV recibido (primeros 200 caracteres):", csvText.substring(0, 200));
+    // Usar PapaParse para convertir CSV a objetos
+    const result = Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (h) => h.trim(),      // Limpia espacios en encabezados
+      transform: (value, field) => {
+        // Limpia espacios y comillas sobrantes
+        if (typeof value === 'string') {
+          value = value.trim();
+          if (value.startsWith('"') && value.endsWith('"')) {
+            value = value.slice(1, -1);
+          }
+        }
+        // Convertir campos numéricos
+        if (['id', 'precio', 'stock', 'orden'].includes(field)) {
+          const num = parseInt(value);
+          return isNaN(num) ? 0 : num;
+        }
+        return value;
+      }
+    });
     
-    const productos = parseCSV(csvText);
-    console.log(`Total productos leídos desde CSV: ${productos.length}`);
+    if (result.errors && result.errors.length > 0) {
+      console.warn('Errores al parsear CSV:', result.errors);
+    }
+    
+    let productos = result.data;
+    console.log(`📊 Productos leídos desde CSV: ${productos.length}`);
     
     if (productos.length === 0) {
-      showToast("⚠️ No se encontraron productos. Revisa la hoja de cálculo.");
+      showToast("⚠️ No se encontraron productos. Revisa la hoja.");
       productsData = [];
       renderProductCatalog();
       return;
     }
     
-    // Ordenar por 'orden' si existe
+    // Ordenar por 'orden'
     productos.sort((a,b) => (a.orden || 999) - (b.orden || 999));
     
     // ---- FILTRO POR COLUMNA "mostrar" (SI/NO) ----
+    // Verificar si existe la columna 'mostrar'
     const tieneColumnaMostrar = productos.some(p => p.hasOwnProperty('mostrar'));
     let productosFiltrados = productos;
     
     if (tieneColumnaMostrar) {
       productosFiltrados = productos.filter(p => {
-        const valorMostrar = (p.mostrar || '').toString().trim().toUpperCase();
-        return valorMostrar === 'SI';
+        const valor = (p.mostrar || '').toString().trim().toUpperCase();
+        return valor === 'SI';
       });
-      console.log(`Productos con mostrar=SI: ${productosFiltrados.length}`);
+      console.log(`✅ Productos con mostrar=SI: ${productosFiltrados.length}`);
       
       if (productosFiltrados.length === 0) {
         console.warn('No hay productos con mostrar=SI. Mostrando todos.');
         productosFiltrados = productos;
       }
     } else {
-      console.log('Columna "mostrar" no encontrada. Mostrando todos los productos.');
+      console.log('Columna "mostrar" no encontrada. Mostrando todos.');
     }
     
     // Convertir a formato del carrito
@@ -133,13 +96,8 @@ async function cargarProductosDesdeSheet() {
       stock: p.stock
     }));
     
-    console.log(`Productos finales en catálogo: ${productsData.length}`);
-    
-    if (productsData.length === 0) {
-      showToast("⚠️ No hay productos para mostrar. Verifica la columna 'mostrar'.");
-    } else {
-      showToast(`✅ ${productsData.length} productos cargados`);
-    }
+    console.log(`🛍️ Productos finales en catálogo: ${productsData.length}`);
+    showToast(`✅ ${productsData.length} productos cargados`);
     
     renderProductCatalog();
     actualizarInterfazCarrito();
@@ -204,7 +162,7 @@ function handleAddToCart(e) {
   agregarProducto(id, nombre, precio);
 }
 
-// ---------- FUNCIONES DEL CARRITO (sin cambios) ----------
+// ---------- FUNCIONES DEL CARRITO (sin cambios relevantes) ----------
 function agregarProducto(id, nombre, precio) {
   const existente = cart.find(item => item.id === id);
   if (existente) {
