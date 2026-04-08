@@ -298,7 +298,7 @@ function enviarPedidoWhatsapp() {
   });
   
   mensaje += `\n💰 *TOTAL: $${total}*\n💬 Notas: ${notas}\n\n¡Gracias por elegir La Casa de Nena! 🍖🥩✨`;
-  const url = "https://wa.me/51559319?text=" + encodeURIComponent(mensaje);
+  const url = "https://wa.me/53987913?text=" + encodeURIComponent(mensaje);
   window.open(url, "_blank");
 }
 
