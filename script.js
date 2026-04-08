@@ -3,6 +3,7 @@ let productsData = []; // se llenará con fetch
 let cart = [];
 
 // ⚠️ IMPORTANTE: Reemplaza esta URL con la que obtuviste de Google Sheets
+// Debe incluir la columna "mostrar" con valores SI/NO
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1IzqBdZaZ5pv51T0NotqZ5xacneLPj6ndK0-j3gJhqY55nqf0PMZgMylr7eU_TD7Pz_tn0QGAJCG3/pub?output=csv';
 
 // ---------- TOAST NOTIFICATION ----------
@@ -63,8 +64,27 @@ async function cargarProductosDesdeSheet() {
     // Ordenar por 'orden' si existe
     productos.sort((a,b) => (a.orden || 999) - (b.orden || 999));
     
+    // ---- FILTRO POR COLUMNA "mostrar" (SI/NO) ----
+    // Si existe la columna 'mostrar', filtrar solo los que tengan valor 'SI' (mayúsculas/minúsculas)
+    const tieneColumnaMostrar = productos.some(p => p.hasOwnProperty('mostrar'));
+    let productosFiltrados = productos;
+    
+    if (tieneColumnaMostrar) {
+      productosFiltrados = productos.filter(p => 
+        p.mostrar && p.mostrar.toString().toUpperCase() === 'SI'
+      );
+      // Si después del filtro no queda ningún producto, se muestran todos (por si acaso)
+      if (productosFiltrados.length === 0) {
+        console.warn('No hay productos con mostrar=SI, se muestran todos.');
+        productosFiltrados = productos;
+      }
+    } else {
+      // Si no existe la columna 'mostrar', se muestran todos (compatibilidad)
+      console.log('Columna "mostrar" no encontrada. Mostrando todos los productos.');
+    }
+    
     // Convertir a formato que usa el carrito
-    productsData = productos.map(p => ({
+    productsData = productosFiltrados.map(p => ({
       id: p.id,
       nombre: p.nombre,
       precio: p.precio,
