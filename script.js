@@ -1,9 +1,8 @@
 // ---------- CARGAR PRODUCTOS DESDE GOOGLE SHEETS ----------
-let productsData = []; // se llenará con fetch
+let productsData = [];
 let cart = [];
 
-// ⚠️ IMPORTANTE: Reemplaza esta URL con la que obtuviste de Google Sheets
-// Debe incluir la columna "mostrar" con valores SI/NO
+// ⚠️ ACTUALIZA ESTA URL CON LA DE TU HOJA PUBLICADA COMO CSV
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1IzqBdZaZ5pv51T0NotqZ5xacneLPj6ndK0-j3gJhqY55nqf0PMZgMylr7eU_TD7Pz_tn0QGAJCG3/pub?output=csv';
 
 // ---------- TOAST NOTIFICATION ----------
@@ -21,77 +20,126 @@ function showToast(message) {
   }, 2500);
 }
 
-// ---------- CONVERTIR CSV A OBJETOS ----------
+// ---------- PARSEAR CSV DE FORMA ROBUSTA ----------
+function parseCSV(csvText) {
+  const lines = csvText.split(/\r?\n/);
+  if (lines.length === 0) return [];
+  
+  // Obtener encabezados (primera línea)
+  const headers = [];
+  let inQuote = false;
+  let current = '';
+  for (let ch of lines[0]) {
+    if (ch === '"') {
+      inQuote = !inQuote;
+    } else if (ch === ',' && !inQuote) {
+      headers.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  headers.push(current.trim());
+  
+  const result = [];
+  
+  // Procesar cada línea de datos
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line === '') continue;
+    
+    const valores = [];
+    let currentVal = '';
+    let inQuotes = false;
+    
+    for (let ch of line) {
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+      } else if (ch === ',' && !inQuotes) {
+        valores.push(currentVal.trim());
+        currentVal = '';
+      } else {
+        currentVal += ch;
+      }
+    }
+    valores.push(currentVal.trim());
+    
+    // Si la cantidad de valores es menor que headers, rellenar con ''
+    while (valores.length < headers.length) valores.push('');
+    
+    let obj = {};
+    headers.forEach((header, idx) => {
+      let val = valores[idx] || '';
+      // Limpiar posibles comillas sobrantes
+      val = val.replace(/^"|"$/g, '').trim();
+      if (header === 'id' || header === 'precio' || header === 'stock' || header === 'orden') {
+        val = parseInt(val) || 0;
+      }
+      obj[header] = val;
+    });
+    result.push(obj);
+  }
+  return result;
+}
+
+// ---------- CARGAR PRODUCTOS ----------
 async function cargarProductosDesdeSheet() {
   try {
+    showToast("🔄 Cargando productos...");
     const response = await fetch(CSV_URL);
     const csvText = await response.text();
     
-    // Parsear CSV
-    const lines = csvText.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const productos = [];
+    console.log("CSV recibido (primeros 200 caracteres):", csvText.substring(0, 200));
     
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
-      // Manejar posibles comillas en valores
-      let valores = [];
-      let current = '';
-      let inQuotes = false;
-      for (let ch of lines[i]) {
-        if (ch === '"') {
-          inQuotes = !inQuotes;
-        } else if (ch === ',' && !inQuotes) {
-          valores.push(current.trim());
-          current = '';
-        } else {
-          current += ch;
-        }
-      }
-      valores.push(current.trim());
-      
-      let obj = {};
-      headers.forEach((header, idx) => {
-        let val = valores[idx] || '';
-        if (header === 'id' || header === 'precio' || header === 'stock' || header === 'orden') {
-          val = parseInt(val) || 0;
-        }
-        obj[header] = val;
-      });
-      productos.push(obj);
+    const productos = parseCSV(csvText);
+    console.log(`Total productos leídos desde CSV: ${productos.length}`);
+    
+    if (productos.length === 0) {
+      showToast("⚠️ No se encontraron productos. Revisa la hoja de cálculo.");
+      productsData = [];
+      renderProductCatalog();
+      return;
     }
     
     // Ordenar por 'orden' si existe
     productos.sort((a,b) => (a.orden || 999) - (b.orden || 999));
     
     // ---- FILTRO POR COLUMNA "mostrar" (SI/NO) ----
-    // Si existe la columna 'mostrar', filtrar solo los que tengan valor 'SI' (mayúsculas/minúsculas)
     const tieneColumnaMostrar = productos.some(p => p.hasOwnProperty('mostrar'));
     let productosFiltrados = productos;
     
     if (tieneColumnaMostrar) {
-      productosFiltrados = productos.filter(p => 
-        p.mostrar && p.mostrar.toString().toUpperCase() === 'SI'
-      );
-      // Si después del filtro no queda ningún producto, se muestran todos (por si acaso)
+      productosFiltrados = productos.filter(p => {
+        const valorMostrar = (p.mostrar || '').toString().trim().toUpperCase();
+        return valorMostrar === 'SI';
+      });
+      console.log(`Productos con mostrar=SI: ${productosFiltrados.length}`);
+      
       if (productosFiltrados.length === 0) {
-        console.warn('No hay productos con mostrar=SI, se muestran todos.');
+        console.warn('No hay productos con mostrar=SI. Mostrando todos.');
         productosFiltrados = productos;
       }
     } else {
-      // Si no existe la columna 'mostrar', se muestran todos (compatibilidad)
       console.log('Columna "mostrar" no encontrada. Mostrando todos los productos.');
     }
     
-    // Convertir a formato que usa el carrito
+    // Convertir a formato del carrito
     productsData = productosFiltrados.map(p => ({
       id: p.id,
       nombre: p.nombre,
       precio: p.precio,
       img: p.img,
-      disponible: p.stock > 0,
+      disponible: (p.stock > 0),
       stock: p.stock
     }));
+    
+    console.log(`Productos finales en catálogo: ${productsData.length}`);
+    
+    if (productsData.length === 0) {
+      showToast("⚠️ No hay productos para mostrar. Verifica la columna 'mostrar'.");
+    } else {
+      showToast(`✅ ${productsData.length} productos cargados`);
+    }
     
     renderProductCatalog();
     actualizarInterfazCarrito();
@@ -110,7 +158,7 @@ function renderProductCatalog() {
   if (!gridContainer) return;
   
   if (productsData.length === 0) {
-    gridContainer.innerHTML = '<p style="text-align:center; color:#aaa;">🔄 Cargando productos...</p>';
+    gridContainer.innerHTML = '<p style="text-align:center; color:#aaa;">🛒 No hay productos disponibles en este momento.</p>';
     return;
   }
   
@@ -142,7 +190,6 @@ function renderProductCatalog() {
     gridContainer.appendChild(card);
   });
   
-  // Asignar eventos a botones habilitados
   document.querySelectorAll('.btn-add:not(.disabled)').forEach(btn => {
     btn.removeEventListener('click', handleAddToCart);
     btn.addEventListener('click', handleAddToCart);
@@ -157,7 +204,7 @@ function handleAddToCart(e) {
   agregarProducto(id, nombre, precio);
 }
 
-// ---------- FUNCIONES DEL CARRITO ----------
+// ---------- FUNCIONES DEL CARRITO (sin cambios) ----------
 function agregarProducto(id, nombre, precio) {
   const existente = cart.find(item => item.id === id);
   if (existente) {
@@ -239,7 +286,6 @@ function actualizarInterfazCarrito() {
   totalSpan.innerText = total;
   if (badge) badge.innerText = totalItems;
   
-  // Eventos dinámicos del carrito
   document.querySelectorAll('.qty-minus').forEach(btn => {
     btn.removeEventListener('click', handleMinus);
     btn.addEventListener('click', handleMinus);
@@ -330,7 +376,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const scrollBtn = document.getElementById("scrollToCartBtn");
   if (scrollBtn) scrollBtn.addEventListener("click", scrollToCart);
   
-  // Mostrar elementos ya visibles
   setTimeout(() => {
     faders.forEach(el => {
       if (el.getBoundingClientRect().top < window.innerHeight - 100) {
