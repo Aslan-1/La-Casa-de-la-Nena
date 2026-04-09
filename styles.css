@@ -572,3 +572,86 @@ footer {
   color: #888;
   cursor: not-allowed;
 }
+/* ===== REPARACIÓN PARA MÓVIL ===== */
+@media (max-width: 768px) {
+  /* Fuerza que el contenedor del catálogo sea visible */
+  #productGrid,
+  .product-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+    gap: 1.5rem !important;
+    padding: 1rem !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 200px !important;
+  }
+  
+  /* Fuerza que cada tarjeta de producto sea visible */
+  .product-card {
+    display: flex !important;
+    flex-direction: column !important;
+    background: #111111 !important;
+    border: 1px solid #c5a059 !important;
+    border-radius: 28px !important;
+    overflow: hidden !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Fuerza que la imagen se vea */
+  .product-img {
+    height: 220px !important;
+    display: block !important;
+    background: #2a2a2a !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  
+  .product-img img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+  
+  /* Fuerza que la información del producto se vea */
+  .product-info {
+    padding: 1rem !important;
+    display: block !important;
+    background: #111111 !important;
+  }
+  
+  .product-info h3 {
+    font-size: 1.2rem !important;
+    color: #ece8e0 !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .price {
+    font-size: 1.2rem !important;
+    color: #e2b86b !important;
+  }
+  
+  /* Fuerza que el botón sea visible y funcional */
+  .btn-add {
+    display: block !important;
+    width: 100% !important;
+    background: #c5a059 !important;
+    color: #0a0a0a !important;
+    padding: 12px 0 !important;
+    border-radius: 60px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border: none !important;
+    margin-top: 0.8rem !important;
+  }
+  
+  /* Etiqueta de stock */
+  .stock-badge {
+    display: inline-block !important;
+    padding: 4px 10px !important;
+    font-size: 0.7rem !important;
+  }
+}
